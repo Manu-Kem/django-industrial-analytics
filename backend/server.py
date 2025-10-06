@@ -405,22 +405,23 @@ async def train_model(current_user: User = Depends(get_current_user)):
         y_oee = df['oee']
         
         # Train efficiency model
-        X_train, X_test, y_train, y_test = train_test_split(X, y_efficiency, test_size=0.2, random_state=42)
+        X_train, X_test, y_efficiency_train, y_efficiency_test = train_test_split(X, y_efficiency, test_size=0.2, random_state=42)
         
         efficiency_model = RandomForestRegressor(n_estimators=100, random_state=42)
-        efficiency_model.fit(X_train, y_train)
+        efficiency_model.fit(X_train, y_efficiency_train)
         
-        # Train OEE model
+        # Train OEE model with same split
+        _, _, y_oee_train, y_oee_test = train_test_split(X, y_oee, test_size=0.2, random_state=42)
         oee_model = RandomForestRegressor(n_estimators=100, random_state=42)
-        oee_model.fit(X_train, y_oee)
+        oee_model.fit(X_train, y_oee_train)
         
         # Calculate metrics
         efficiency_pred = efficiency_model.predict(X_test)
-        efficiency_r2 = r2_score(y_test, efficiency_pred)
-        efficiency_mse = mean_squared_error(y_test, efficiency_pred)
+        efficiency_r2 = r2_score(y_efficiency_test, efficiency_pred)
+        efficiency_mse = mean_squared_error(y_efficiency_test, efficiency_pred)
         
         oee_pred = oee_model.predict(X_test)
-        oee_r2 = r2_score(df['oee'].iloc[X_test.index], oee_pred)
+        oee_r2 = r2_score(y_oee_test, oee_pred)
         
         # Save models
         model_path_efficiency = model_dir / "efficiency_model.joblib"
